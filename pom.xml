@@ -25,7 +25,7 @@
         <logback.version>1.5.12</logback.version>
         <lombok.version>1.18.36</lombok.version>
 
-        <maven.compiler.plugin.version>3.13.0</maven.compiler.plugin.version>
+        <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
         <maven.surefire.plugin.version>3.5.2</maven.surefire.plugin.version>
         <maven.enforcer.plugin.version>3.5.0</maven.enforcer.plugin.version>
         <maven.pmd.plugin.version>3.26.0</maven.pmd.plugin.version>
