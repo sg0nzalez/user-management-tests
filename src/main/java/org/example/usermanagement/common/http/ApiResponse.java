@@ -1,31 +1,30 @@
 package org.example.usermanagement.common.http;
 
-import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchemaInClasspath;
-
 import io.restassured.response.Response;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.stream.Collectors;
 import org.example.usermanagement.model.ErrorResponse;
 
 /**
- * Fluent HTTP response wrapper with soft status/body asserts until {@link #assertAll()}.
+ * Fluent HTTP response wrapper. Status checks are hard asserts (stop the chain). Body and schema
+ * checks are soft until {@link #assertAll()}, via {@link SoftResponseBodyChecks}.
  *
  * @param <S> concrete self type for fluent chaining
  */
-@SuppressWarnings("PMD.GodClass")
 public abstract class ApiResponse<S extends ApiResponse<S>> {
 
   private final Response response;
   private final List<String> errors = new ArrayList<>();
+  private final SoftResponseBodyChecks bodyChecks;
 
   protected ApiResponse(Response response) {
     if (response == null) {
       throw new IllegalArgumentException("Response must not be null");
     }
     this.response = response;
+    this.bodyChecks = new SoftResponseBodyChecks(response, this::addError);
   }
 
   protected abstract S self();
@@ -89,7 +88,7 @@ public abstract class ApiResponse<S extends ApiResponse<S>> {
   public S assertStatus(int expected) {
     int actual = statusCode();
     if (actual != expected) {
-      addError("Expected HTTP " + expected + " but was " + actual);
+      throw new AssertionError("Expected HTTP " + expected + " but was " + actual);
     }
     return self();
   }
@@ -103,48 +102,26 @@ public abstract class ApiResponse<S extends ApiResponse<S>> {
     }
     String wanted =
         Arrays.stream(expected).mapToObj(String::valueOf).collect(Collectors.joining("/"));
-    addError("Expected HTTP " + wanted + " but was " + actual);
-    return self();
+    throw new AssertionError("Expected HTTP " + wanted + " but was " + actual);
   }
 
   public S assertBodyNotBlank() {
-    if (asString() == null || asString().isBlank()) {
-      addError("Expected a non-blank response body");
-    }
+    bodyChecks.assertBodyNotBlank();
     return self();
   }
 
   public S assertBodyContains(String... fragments) {
-    String body = bodyOrEmpty();
-    for (String fragment : fragments) {
-      if (!body.contains(fragment)) {
-        addError("Expected body to contain '" + fragment + "', got: " + truncateForAssert(body));
-      }
-    }
+    bodyChecks.assertBodyContains(fragments);
     return self();
   }
 
   public S assertBodyContainsIgnoringCase(String... fragments) {
-    String body = bodyOrEmpty();
-    String lower = body.toLowerCase(Locale.ROOT);
-    for (String fragment : fragments) {
-      if (!lower.contains(fragment.toLowerCase(Locale.ROOT))) {
-        addError(
-            "Expected body to contain '"
-                + fragment
-                + "' (ignore case), got: "
-                + truncateForAssert(body));
-      }
-    }
+    bodyChecks.assertBodyContainsIgnoringCase(fragments);
     return self();
   }
 
   public S assertMatchesSchema(String schemaClasspath) {
-    try {
-      response.then().assertThat().body(matchesJsonSchemaInClasspath(schemaClasspath));
-    } catch (AssertionError ex) {
-      addError("JSON Schema '" + schemaClasspath + "': " + ex.getMessage());
-    }
+    bodyChecks.assertMatchesSchema(schemaClasspath);
     return self();
   }
 
@@ -154,21 +131,7 @@ public abstract class ApiResponse<S extends ApiResponse<S>> {
 
   /** Deserializes the body as {@link ErrorResponse} and asserts the error schema. */
   public S assertErrorResponse() {
-    assertMatchesSchema(Schemas.ERROR);
-    try {
-      ErrorResponse body = asErrorResponse();
-      if (body == null || body.getError() == null || body.getError().isBlank()) {
-        addError(
-            "Expected ErrorResponse.error with a message, got: "
-                + truncateForAssert(bodyOrEmpty()));
-      }
-    } catch (RuntimeException ex) {
-      addError(
-          "Expected JSON ErrorResponse, got status "
-              + statusCode()
-              + " body: "
-              + truncateForAssert(bodyOrEmpty()));
-    }
+    bodyChecks.assertErrorResponse();
     return self();
   }
 
@@ -179,16 +142,5 @@ public abstract class ApiResponse<S extends ApiResponse<S>> {
     String message = String.join("; ", errors);
     errors.clear();
     throw new AssertionError(message);
-  }
-
-  private String bodyOrEmpty() {
-    return asString() == null ? "" : asString();
-  }
-
-  private static String truncateForAssert(String body) {
-    if (body.length() <= 200) {
-      return body;
-    }
-    return body.substring(0, 200) + "...";
   }
 }

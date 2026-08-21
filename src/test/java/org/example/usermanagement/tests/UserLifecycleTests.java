@@ -39,7 +39,7 @@ public class UserLifecycleTests extends UserManagementApiTest {
 
     usersClient().listUsers().assertOk().assertContainsEmail(created.getEmail()).assertAll();
 
-    usersClient().deleteUser(created.getEmail(), true).assertNoContent().assertAll();
+    usersClient().deleteUser(created.getEmail()).assertNoContent().assertAll();
 
     usersClient().getUserByEmail(created.getEmail()).assertNotFound().assertAll();
     usersClient().listUsers().assertOk().assertDoesNotContainEmail(created.getEmail()).assertAll();

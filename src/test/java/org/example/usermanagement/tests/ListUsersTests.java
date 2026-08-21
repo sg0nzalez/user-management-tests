@@ -34,7 +34,7 @@ public class ListUsersTests extends UserManagementApiTest {
   public void listExcludesDeletedUser() {
     User request = validUser();
     usersClient().createUser(request).assertCreated().assertAll();
-    usersClient().deleteUser(request.getEmail(), true).assertNoContent().assertAll();
+    usersClient().deleteUser(request.getEmail()).assertNoContent().assertAll();
 
     usersClient().listUsers().assertOk().assertDoesNotContainEmail(request.getEmail()).assertAll();
   }

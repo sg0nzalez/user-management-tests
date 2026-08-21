@@ -20,7 +20,7 @@ public class DeleteUserTests extends UserManagementApiTest {
     User request = validUser();
     usersClient().createUser(request).assertCreated().assertAll();
 
-    usersClient().deleteUser(request.getEmail(), true).assertNoContent().assertAll();
+    usersClient().deleteUser(request.getEmail()).assertNoContent().assertAll();
 
     usersClient().getUserByEmail(request.getEmail()).assertNotFound().assertAll();
   }
@@ -32,7 +32,7 @@ public class DeleteUserTests extends UserManagementApiTest {
     User request = validUser();
     usersClient().createUser(request).assertCreated().assertAll();
 
-    usersClient().deleteUser(request.getEmail(), true).assertNoContent().assertAll();
+    usersClient().deleteUser(request.getEmail()).assertNoContent().assertAll();
 
     usersClient().listUsers().assertOk().assertDoesNotContainEmail(request.getEmail()).assertAll();
   }
@@ -45,7 +45,7 @@ public class DeleteUserTests extends UserManagementApiTest {
     usersClient().createUser(request).assertCreated().assertAll();
 
     usersClient()
-        .deleteUser(request.getEmail(), false)
+        .deleteUserUnauthenticated(request.getEmail())
         .assertUnauthorized()
         .assertErrorResponse()
         .assertAll();
@@ -98,18 +98,14 @@ public class DeleteUserTests extends UserManagementApiTest {
   @Description("DELETE /users/{email} for an unknown email returns 404 and an error message")
   public void deleteUserNotFoundReturns404() {
     String email = uniqueEmail("missing-delete");
-    usersClient().deleteUser(email, true).assertNotFound().assertErrorResponse().assertAll();
+    usersClient().deleteUser(email).assertNotFound().assertErrorResponse().assertAll();
   }
 
   @Test
   @Issue("BUG-003")
   @Description("DELETE /users/{email} with a SQL-injection-like path returns 404, not 500")
   public void deleteUserSqlInjectionPathReturns404() {
-    usersClient()
-        .deleteUser("test' OR '1'='1", true)
-        .assertNotFound()
-        .assertErrorResponse()
-        .assertAll();
+    usersClient().deleteUser("test' OR '1'='1").assertNotFound().assertErrorResponse().assertAll();
   }
 
   @Test
