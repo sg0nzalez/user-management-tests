@@ -15,7 +15,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <restassured.version>5.5.0</restassured.version>
+        <restassured.version>6.0.1</restassured.version>
         <testng.version>7.10.2</testng.version>
         <allure.version>2.35.4</allure.version>
         <allure.report.version>2.32.2</allure.report.version>
