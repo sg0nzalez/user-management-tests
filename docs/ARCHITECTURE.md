@@ -55,7 +55,7 @@ flowchart TB
   tests --> client[UsersClient]
   client --> routes[UsersRoutes]
   client --> responses[UserResponse]
-  baseTest --> config[TestEnvironment]
+  baseTest --> config[TestContext]
   config --> authLoader[AuthLoader]
   authLoader --> crypto[CryptoSecrets]
   ttfbTests --> ttfbRunner[TtfbRunner]
@@ -66,7 +66,7 @@ flowchart TB
 
 1. Maven enforcer requires `-Denv=DEV|PROD` before tests run.
 2. `testng.xml` (filtered) passes the `Environment` parameter to TestNG.
-3. `BaseTest` / `TestEnvironment` load `config.properties` (base URLs) and `auth.properties` (encrypted tokens).
+3. `BaseTest` builds a suite-scoped `TestContext` (env + config/auth loaders) from `config.properties` and `auth.properties` (encrypted tokens).
 4. `BaseApiTest` configures RestAssured with JSON content type and the environment base URL.
 5. Test classes call `UsersClient` methods annotated with Allure `@Step`.
 6. Clients return typed wrappers (`UserResponse`, `UserListResponse`) extending `ApiResponse` for status and body assertions.

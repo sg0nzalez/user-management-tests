@@ -12,7 +12,6 @@ public abstract class UserManagementApiTest extends BaseApiTest {
 
   @BeforeClass(alwaysRun = true)
   public void setUpUsersClient() {
-    ensureApiInitialized();
     usersClient = new UsersClient(this::givenBase, auth());
   }
 

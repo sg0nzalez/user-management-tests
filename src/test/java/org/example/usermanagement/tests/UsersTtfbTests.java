@@ -36,7 +36,6 @@ public class UsersTtfbTests extends BaseApiTest {
 
   @BeforeClass(alwaysRun = true)
   public void seedTtfbFixtures() {
-    ensureApiInitialized();
     usersClient = new UsersClient(this::givenBase, auth());
     apiBaseUrl = config().requireForEnvironment(environment(), "API_BASE_URL");
     concurrency = TtfbConfig.defaults().getConcurrency();

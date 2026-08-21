@@ -103,14 +103,22 @@ public final class UsersClient {
             .response());
   }
 
-  @Step("Delete user {email} (auth={withAuth})")
-  public UserResponse deleteUser(String email, boolean withAuth) {
-    RequestSpecification request = spec.get();
-    if (withAuth) {
-      request.header(AuthHeaders.AUTHENTICATION, auth.require("AUTH_TOKEN"));
-    }
+  @Step("Delete user {email}")
+  public UserResponse deleteUser(String email) {
     return UserResponse.of(
-        request.when().delete(UsersRoutes.userByEmail(), email).then().extract().response());
+        spec.get()
+            .header(AuthHeaders.AUTHENTICATION, auth.require("AUTH_TOKEN"))
+            .when()
+            .delete(UsersRoutes.userByEmail(), email)
+            .then()
+            .extract()
+            .response());
+  }
+
+  @Step("Delete user {email} without Authentication")
+  public UserResponse deleteUserUnauthenticated(String email) {
+    return UserResponse.of(
+        spec.get().when().delete(UsersRoutes.userByEmail(), email).then().extract().response());
   }
 
   @Step("Delete user {email} with Authentication={token}")
