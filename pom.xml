@@ -17,7 +17,7 @@
 
         <restassured.version>5.5.0</restassured.version>
         <testng.version>7.10.2</testng.version>
-        <allure.version>2.29.1</allure.version>
+        <allure.version>2.35.4</allure.version>
         <allure.report.version>2.32.2</allure.report.version>
         <allure.maven.plugin.version>3.0.2</allure.maven.plugin.version>
         <aspectj.version>1.9.24</aspectj.version>
