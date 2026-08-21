@@ -22,7 +22,7 @@
         <allure.maven.plugin.version>3.0.2</allure.maven.plugin.version>
         <aspectj.version>1.9.25.1</aspectj.version>
         <slf4j.version>2.0.16</slf4j.version>
-        <logback.version>1.5.12</logback.version>
+        <logback.version>1.6.3</logback.version>
         <lombok.version>1.18.36</lombok.version>
 
         <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
