@@ -29,6 +29,7 @@ env:
     --add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED
     --add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED
     --add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED
+  PAGES_BASE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
 
 jobs:
   quality:
@@ -141,10 +142,132 @@ jobs:
             target/surefire-reports
           retention-days: 7
 
+  report:
+    if: always() && github.event_name == 'pull_request'
+    needs: [test-dev, test-prod]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Download DEV artifacts
+        continue-on-error: true
+        uses: actions/download-artifact@v7
+        with:
+          name: test-dev-artifacts
+          path: artifacts/dev
+
+      - name: Download PROD artifacts
+        continue-on-error: true
+        uses: actions/download-artifact@v7
+        with:
+          name: test-prod-artifacts
+          path: artifacts/prod
+
+      - name: Stage Allure site and Surefire summaries
+        id: summarize
+        run: |
+          set -euo pipefail
+          chmod +x .github/scripts/surefire-markdown.sh
+          mkdir -p site/dev site/prod
+
+          stage_allure() {
+            local src="$1"
+            local dest="$2"
+            local index=""
+            if [[ -d "${src}" ]]; then
+              index="$(find "${src}" -path '*/allure-report/index.html' -print -quit 2>/dev/null || true)"
+              if [[ -z "${index}" ]]; then
+                index="$(find "${src}" -name index.html -print -quit 2>/dev/null || true)"
+              fi
+            fi
+            if [[ -n "${index}" ]]; then
+              cp "${index}" "${dest}/index.html"
+              echo "Staged Allure from ${index} -> ${dest}/index.html"
+            else
+              echo "<!doctype html><title>No Allure report</title><p>No Allure report for this env.</p>" > "${dest}/index.html"
+              echo "No Allure report under ${src}"
+            fi
+          }
+
+          stage_allure artifacts/dev site/dev
+          stage_allure artifacts/prod site/prod
+
+          {
+            echo "<!-- user-management-tests-ci-report -->"
+            echo "## E2E results"
+            echo
+            echo "| Env | Job |"
+            echo "|-----|-----|"
+            echo "| DEV | \`${{ needs.test-dev.result }}\` |"
+            echo "| PROD | \`${{ needs.test-prod.result }}\` |"
+            echo
+            .github/scripts/surefire-markdown.sh "DEV" "artifacts/dev"
+            .github/scripts/surefire-markdown.sh "PROD" "artifacts/prod"
+            echo "### Reports"
+            echo
+            echo "- [Allure DEV](${{ env.PAGES_BASE_URL }}/prs/${{ github.event.pull_request.number }}/dev/)"
+            echo "- [Allure PROD](${{ env.PAGES_BASE_URL }}/prs/${{ github.event.pull_request.number }}/prod/)"
+            echo "- [Workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            echo
+            echo "_Pages may take a minute to update after deploy._"
+          } > pr-comment.md
+
+          cat pr-comment.md >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Publish Allure to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: site
+          destination_dir: prs/${{ github.event.pull_request.number }}
+          keep_files: true
+          commit_message: Deploy Allure for PR ${{ github.event.pull_request.number }}
+
+      - name: Upsert sticky PR comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- user-management-tests-ci-report -->';
+            const body = fs.readFileSync('pr-comment.md', 'utf8');
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number,
+              per_page: 100,
+            });
+            const existing = comments.find((c) => c.user?.type === 'Bot' && c.body?.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body,
+              });
+            }
+
   test-ondemand:
     if: github.event_name == 'workflow_dispatch'
     needs: quality
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
     steps:
       - uses: actions/checkout@v7
 
@@ -189,3 +312,45 @@ jobs:
             target/allure-report
             target/surefire-reports
           retention-days: 7
+
+      - name: Stage Allure and write job summary
+        if: always()
+        run: |
+          set -euo pipefail
+          chmod +x .github/scripts/surefire-markdown.sh
+          mkdir -p site
+          PAGES_URL="${{ env.PAGES_BASE_URL }}/ondemand/${{ github.run_id }}/"
+
+          if [[ -f target/allure-report/index.html ]]; then
+            cp target/allure-report/index.html site/index.html
+          else
+            echo "<!doctype html><title>No Allure report</title><p>No Allure report for this run.</p>" > site/index.html
+          fi
+
+          {
+            echo "## On-demand E2E results"
+            echo
+            echo "| Field | Value |"
+            echo "|-------|-------|"
+            echo "| Environment | \`${{ inputs.environment }}\` |"
+            echo "| Suite | \`${{ inputs.xmlFileName }}\` |"
+            echo "| Job | see steps above |"
+            echo
+            .github/scripts/surefire-markdown.sh "${{ inputs.environment }}" "target/surefire-reports"
+            echo "### Reports"
+            echo
+            echo "- [Allure report](${PAGES_URL})"
+            echo "- [Workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            echo
+            echo "_Pages may take a minute to update after deploy._"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Publish Allure to GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: site
+          destination_dir: ondemand/${{ github.run_id }}
+          keep_files: true
+          commit_message: Deploy Allure for on-demand run ${{ github.run_id }}
