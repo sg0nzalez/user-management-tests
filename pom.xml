@@ -30,7 +30,7 @@
         <maven.enforcer.plugin.version>3.5.0</maven.enforcer.plugin.version>
         <maven.pmd.plugin.version>3.28.0</maven.pmd.plugin.version>
         <spotless.version>2.43.0</spotless.version>
-        <errorprone.version>2.36.0</errorprone.version>
+        <errorprone.version>2.50.0</errorprone.version>
 
         <xmlFileName>testng.xml</xmlFileName>
         <encryption.master.key>${env.ENCRYPTION_MASTER_KEY}</encryption.master.key>
@@ -115,6 +115,7 @@
                     <compilerArgs>
                         <arg>-XDcompilePolicy=simple</arg>
                         <arg>--should-stop=ifError=FLOW</arg>
+                        <arg>-XDaddTypeAnnotationsToSymbol=true</arg>
                         <arg>-Xplugin:ErrorProne</arg>
                     </compilerArgs>
                     <annotationProcessorPaths>
