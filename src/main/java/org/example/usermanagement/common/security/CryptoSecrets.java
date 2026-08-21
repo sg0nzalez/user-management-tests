@@ -118,14 +118,14 @@ public class CryptoSecrets {
     return key;
   }
 
-  @SuppressWarnings("PMD.HardCodedCryptoKey") // key bytes are derived from ENCRYPTION_MASTER_KEY
+  // key bytes are derived from ENCRYPTION_MASTER_KEY
   private SecretKeySpec buildAes256Key(String masterKey) throws GeneralSecurityException {
     MessageDigest digest = MessageDigest.getInstance("SHA-256");
     byte[] keyBytes = digest.digest(masterKey.getBytes(StandardCharsets.UTF_8));
     return new SecretKeySpec(keyBytes, KEY_ALGORITHM);
   }
 
-  @SuppressWarnings("PMD.HardCodedCryptoKey") // legacy key bytes derived from ENCRYPTION_MASTER_KEY
+  // legacy key bytes derived from ENCRYPTION_MASTER_KEY
   private SecretKeySpec buildLegacyAes128Key(String masterKey) throws GeneralSecurityException {
     MessageDigest sha = MessageDigest.getInstance("SHA-1");
     byte[] digest = sha.digest(masterKey.getBytes(StandardCharsets.UTF_8));
