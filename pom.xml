@@ -20,7 +20,7 @@
         <allure.version>2.35.4</allure.version>
         <allure.report.version>2.32.2</allure.report.version>
         <allure.maven.plugin.version>3.0.2</allure.maven.plugin.version>
-        <aspectj.version>1.9.24</aspectj.version>
+        <aspectj.version>1.9.25.1</aspectj.version>
         <slf4j.version>2.0.16</slf4j.version>
         <logback.version>1.5.12</logback.version>
         <lombok.version>1.18.36</lombok.version>
