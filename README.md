@@ -13,10 +13,10 @@ Error Prone needs JDK compiler module exports. This repo includes [`.mvn/jvm.con
 ```bash
 export JAVA_HOME=$(/usr/libexec/java_home -v 21 2>/dev/null || echo /opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home)
 export PATH="$JAVA_HOME/bin:$PATH"
-export ENCRYPTION_MASTER_KEY='loanpro-sdet-master-key-2026'
+export ENCRYPTION_MASTER_KEY='<your-master-key>'
 ```
 
-`ENCRYPTION_MASTER_KEY` is required for every test run (no POM default). CI reads it from the repository Actions secret `ENCRYPTION_MASTER_KEY`.
+`ENCRYPTION_MASTER_KEY` is required for every test run and for `CryptoSecretsCli` (no POM default). Use the same key that produced the committed `ENC(...)` values in `auth.properties`. CI injects it from the repository Actions secret `ENCRYPTION_MASTER_KEY` (value is not stored in this repo).
 
 If you still see `IllegalAccessError` / Error Prone crashes on JDK 23+, either switch to JDK 21 or set the same flags via `MAVEN_OPTS` (see Error Prone [installation](https://errorprone.info/docs/installation)).
 
@@ -81,6 +81,8 @@ TTFB is not a merge gate. Persistent `GET /users` p90 failures are tracked as [B
 3. Choose `environment` (`DEV` or `PROD`) and `xmlFileName` (`testng.xml` or `ttfb.xml`)
 
 Pull requests automatically run quality gates plus parallel DEV and PROD functional tests. There is no `push` trigger.
+
+**Expected red `test-dev` / `test-prod`:** those jobs assert OpenAPI-correct behavior against known API mismatches, so they often exit non-zero. That is intentional — failures map to tickets under [docs/bugs/](docs/bugs/). The `quality` job and the post-run `report` job (sticky PR comment + Allure on Pages) still succeed when tests fail.
 
 ### Reports in CI
 
