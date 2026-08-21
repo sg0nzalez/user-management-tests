@@ -125,7 +125,7 @@ public class CryptoSecrets {
     return new SecretKeySpec(keyBytes, KEY_ALGORITHM);
   }
 
-  @SuppressWarnings("PMD.HardCodedCryptoKey") // legacy key bytes derived from ENCRYPTION_MASTER_KEY
+  // legacy key bytes derived from ENCRYPTION_MASTER_KEY
   private SecretKeySpec buildLegacyAes128Key(String masterKey) throws GeneralSecurityException {
     MessageDigest sha = MessageDigest.getInstance("SHA-1");
     byte[] digest = sha.digest(masterKey.getBytes(StandardCharsets.UTF_8));
