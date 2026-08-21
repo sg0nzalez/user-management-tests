@@ -103,14 +103,20 @@ flowchart TB
   quality --> parallel
   devJob --> docker[Docker_API_3000]
   prodJob --> docker
+  parallel --> report[report_job]
+  report --> pagesPr[GitHub_Pages_prs]
+  report --> prComment[PR_sticky_comment]
+  quality --> ondemand[test_ondemand]
+  ondemand --> pagesOd[GitHub_Pages_ondemand]
+  ondemand --> stepSummary[GITHUB_STEP_SUMMARY]
 ```
 
-| Trigger | Jobs | Suite |
-|---------|------|-------|
-| `pull_request` | quality → parallel test-dev + test-prod | `testng.xml` (TTFB excluded) |
-| `workflow_dispatch` | quality → test-ondemand | chosen env + suite |
+| Trigger | Jobs | Suite | Report surface |
+|---------|------|-------|----------------|
+| `pull_request` | quality → parallel test-dev + test-prod → report | `testng.xml` (TTFB excluded) | Sticky PR comment + Pages `prs/<n>/dev\|prod/` |
+| `workflow_dispatch` | quality → test-ondemand | chosen env + suite | Job summary + Pages `ondemand/<run_id>/` |
 
-No `push` trigger — the PR is the merge gate. On-demand dispatch allows choosing `DEV`/`PROD` and `testng.xml`/`ttfb.xml`.
+No `push` trigger — the PR is the merge gate. On-demand dispatch allows choosing `DEV`/`PROD` and `testng.xml`/`ttfb.xml`. Pages is served from the `gh-pages` branch (Deploy from a branch). Actions artifacts remain a 7-day backup.
 
 ## Quality toolchain
 

@@ -82,6 +82,17 @@ TTFB is not a merge gate. Persistent `GET /users` p90 failures are tracked as [B
 
 Pull requests automatically run quality gates plus parallel DEV and PROD functional tests. There is no `push` trigger.
 
+### Reports in CI
+
+- **Pull requests:** a sticky PR comment summarizes DEV/PROD Surefire results (counts + failing methods) and links to Allure on GitHub Pages:
+  - `https://sg0nzalez.github.io/user-management-tests/prs/<PR_NUMBER>/dev/`
+  - `https://sg0nzalez.github.io/user-management-tests/prs/<PR_NUMBER>/prod/`
+- **On-demand runs:** the Actions job summary has the same Surefire summary; Allure is at  
+  `https://sg0nzalez.github.io/user-management-tests/ondemand/<RUN_ID>/`
+- Artifacts (`test-*-artifacts`) still upload Allure + Surefire for 7 days as a backup.
+
+GitHub Pages must use **Settings → Pages → Deploy from a branch → `gh-pages` / (root)**. CI publishes under `prs/` and `ondemand/` on that branch.
+
 ## Documentation
 
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
@@ -111,4 +122,4 @@ flowchart LR
 | `tests` | TestNG test classes |
 
 - **Env / secrets:** required `-Denv=DEV|PROD`; `auth.properties` uses `ENC(...)` (master key `ENCRYPTION_MASTER_KEY`).
-- **Reports:** Allure single-file HTML at `target/allure-report/index.html` after `mvn test`.
+- **Reports:** Allure single-file HTML at `target/allure-report/index.html` after `mvn test`. In CI, PRs get a sticky comment + Pages links; on-demand runs write the summary to the Actions job summary.
