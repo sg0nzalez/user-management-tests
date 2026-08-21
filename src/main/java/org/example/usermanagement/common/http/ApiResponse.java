@@ -15,6 +15,7 @@ import org.example.usermanagement.model.ErrorResponse;
  *
  * @param <S> concrete self type for fluent chaining
  */
+@SuppressWarnings("PMD.GodClass")
 public abstract class ApiResponse<S extends ApiResponse<S>> {
 
   private final Response response;
