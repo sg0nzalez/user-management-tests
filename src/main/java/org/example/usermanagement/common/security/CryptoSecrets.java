@@ -118,7 +118,7 @@ public class CryptoSecrets {
     return key;
   }
 
-  // key bytes are derived from ENCRYPTION_MASTER_KEY
+  @SuppressWarnings("PMD.HardCodedCryptoKey") // key bytes are derived from ENCRYPTION_MASTER_KEY
   private SecretKeySpec buildAes256Key(String masterKey) throws GeneralSecurityException {
     MessageDigest digest = MessageDigest.getInstance("SHA-256");
     byte[] keyBytes = digest.digest(masterKey.getBytes(StandardCharsets.UTF_8));
