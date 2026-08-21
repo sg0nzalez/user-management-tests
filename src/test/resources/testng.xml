@@ -1,0 +1,14 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="User Management API Suite" verbose="1" parallel="none">
+    <parameter name="Environment" value="${env}"/>
+    <test name="User Management functional tests">
+        <groups>
+            <run>
+                <exclude name="ttfb"/>
+            </run>
+        </groups>
+        <packages>
+            <package name="org.example.usermanagement.tests"/>
+        </packages>
+    </test>
+</suite>

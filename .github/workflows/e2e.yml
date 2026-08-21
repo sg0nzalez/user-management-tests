@@ -1,0 +1,191 @@
+name: E2E Tests
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: API path prefix (DEV or PROD)
+        type: choice
+        options: [DEV, PROD]
+        default: DEV
+      xmlFileName:
+        description: TestNG suite
+        type: choice
+        options: [testng.xml, ttfb.xml]
+        default: testng.xml
+
+env:
+  ENCRYPTION_MASTER_KEY: loanpro-sdet-master-key-2026
+  MAVEN_OPTS: >-
+    --add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED
+    --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED
+    --add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED
+    --add-exports=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED
+    --add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED
+    --add-exports=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED
+    --add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED
+    --add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED
+    --add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED
+    --add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Spotless check
+        run: mvn -s settings.xml -B spotless:check
+
+      - name: PMD check
+        run: mvn -s settings.xml -B pmd:check
+
+      - name: Compile tests
+        run: mvn -s settings.xml -B -DskipTests test-compile
+
+  test-dev:
+    if: github.event_name == 'pull_request'
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Start User Management API
+        run: |
+          docker run -d --name user-management-api -p 3000:3000 \
+            ghcr.io/danielsilva-loanpro/sdet-interview-challenge:latest
+
+      - name: Wait for API
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:3000/dev/users > /dev/null; then
+              echo "API ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "API did not become ready in time"
+          docker logs user-management-api
+          exit 1
+
+      - name: Run DEV tests
+        run: mvn -s settings.xml -B verify -Denv=DEV
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-dev-artifacts
+          path: |
+            target/allure-results
+            target/allure-report
+            target/surefire-reports
+          retention-days: 7
+
+  test-prod:
+    if: github.event_name == 'pull_request'
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Start User Management API
+        run: |
+          docker run -d --name user-management-api -p 3000:3000 \
+            ghcr.io/danielsilva-loanpro/sdet-interview-challenge:latest
+
+      - name: Wait for API
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:3000/prod/users > /dev/null; then
+              echo "API ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "API did not become ready in time"
+          docker logs user-management-api
+          exit 1
+
+      - name: Run PROD tests
+        run: mvn -s settings.xml -B verify -Denv=PROD
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-prod-artifacts
+          path: |
+            target/allure-results
+            target/allure-report
+            target/surefire-reports
+          retention-days: 7
+
+  test-ondemand:
+    if: github.event_name == 'workflow_dispatch'
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Start User Management API
+        run: |
+          docker run -d --name user-management-api -p 3000:3000 \
+            ghcr.io/danielsilva-loanpro/sdet-interview-challenge:latest
+
+      - name: Wait for API
+        run: |
+          ENV_LOWER=$(echo "${{ inputs.environment }}" | tr '[:upper:]' '[:lower:]')
+          for i in $(seq 1 30); do
+            if curl -sf "http://localhost:3000/${ENV_LOWER}/users" > /dev/null; then
+              echo "API ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "API did not become ready in time"
+          docker logs user-management-api
+          exit 1
+
+      - name: Run on-demand tests
+        run: |
+          mvn -s settings.xml -B verify \
+            -Denv=${{ inputs.environment }} \
+            -DxmlFileName=${{ inputs.xmlFileName }}
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-ondemand-artifacts
+          path: |
+            target/allure-results
+            target/allure-report
+            target/surefire-reports
+          retention-days: 7

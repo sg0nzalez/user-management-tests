@@ -1,0 +1,38 @@
+# Build
+target/
+**/target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Allure
+allure-results/
+**/allure-results/
+allure-report/
+**/allure-report/
+.allure/
+**/.allure/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.classpath
+.project
+.settings/
+
+# Secrets / local overrides
+.env
+*.properties.local
+auth.properties.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test output
+test-output/
+**/test-output/
