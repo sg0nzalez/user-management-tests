@@ -17,7 +17,7 @@ on:
         default: testng.xml
 
 env:
-  ENCRYPTION_MASTER_KEY: loanpro-sdet-master-key-2026
+  ENCRYPTION_MASTER_KEY: ${{ secrets.ENCRYPTION_MASTER_KEY }}
   MAVEN_OPTS: >-
     --add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED
     --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED
