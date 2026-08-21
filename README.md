@@ -16,7 +16,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 export ENCRYPTION_MASTER_KEY='loanpro-sdet-master-key-2026'
 ```
 
-`ENCRYPTION_MASTER_KEY` is required for every test run (no POM default). CI sets it as a workflow env var.
+`ENCRYPTION_MASTER_KEY` is required for every test run (no POM default). CI reads it from the repository Actions secret `ENCRYPTION_MASTER_KEY`.
 
 If you still see `IllegalAccessError` / Error Prone crashes on JDK 23+, either switch to JDK 21 or set the same flags via `MAVEN_OPTS` (see Error Prone [installation](https://errorprone.info/docs/installation)).
 

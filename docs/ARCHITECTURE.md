@@ -87,7 +87,7 @@ flowchart TB
 |------|---------|
 | `config.properties` | `DEV_API_BASE_URL`, `PROD_API_BASE_URL` pointing to `localhost:3000` |
 | `auth.properties` | `DEV_AUTH_TOKEN`, `PROD_AUTH_TOKEN` as `ENC(...)` ciphertext |
-| `ENCRYPTION_MASTER_KEY` | Injected by Maven Surefire and CI; decrypts tokens at runtime |
+| `ENCRYPTION_MASTER_KEY` | Injected by Maven Surefire; CI supplies it from the repo Actions secret; decrypts tokens at runtime |
 
 The master key is **not** the API token. Developers encrypt the challenge token once with `CryptoSecretsCli`, commit only `ENC(...)` values, and run tests without exporting plaintext secrets.
 
