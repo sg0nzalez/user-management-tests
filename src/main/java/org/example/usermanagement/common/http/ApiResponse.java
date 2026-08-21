@@ -8,8 +8,8 @@ import java.util.stream.Collectors;
 import org.example.usermanagement.model.ErrorResponse;
 
 /**
- * Fluent HTTP response wrapper with soft status asserts until {@link #assertAll()}. Body and schema
- * checks are delegated to {@link SoftResponseBodyChecks}.
+ * Fluent HTTP response wrapper. Status checks are hard asserts (stop the chain). Body and schema
+ * checks are soft until {@link #assertAll()}, via {@link SoftResponseBodyChecks}.
  *
  * @param <S> concrete self type for fluent chaining
  */
@@ -88,7 +88,7 @@ public abstract class ApiResponse<S extends ApiResponse<S>> {
   public S assertStatus(int expected) {
     int actual = statusCode();
     if (actual != expected) {
-      addError("Expected HTTP " + expected + " but was " + actual);
+      throw new AssertionError("Expected HTTP " + expected + " but was " + actual);
     }
     return self();
   }
@@ -102,8 +102,7 @@ public abstract class ApiResponse<S extends ApiResponse<S>> {
     }
     String wanted =
         Arrays.stream(expected).mapToObj(String::valueOf).collect(Collectors.joining("/"));
-    addError("Expected HTTP " + wanted + " but was " + actual);
-    return self();
+    throw new AssertionError("Expected HTTP " + wanted + " but was " + actual);
   }
 
   public S assertBodyNotBlank() {

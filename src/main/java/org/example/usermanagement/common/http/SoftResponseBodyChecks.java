@@ -55,7 +55,7 @@ final class SoftResponseBodyChecks {
   void assertMatchesSchema(String schemaClasspath) {
     try {
       response.then().assertThat().body(matchesJsonSchemaInClasspath(schemaClasspath));
-    } catch (AssertionError ex) {
+    } catch (AssertionError | RuntimeException ex) {
       addError.accept("JSON Schema '" + schemaClasspath + "': " + ex.getMessage());
     }
   }
